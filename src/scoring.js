@@ -119,6 +119,6 @@ export function evaluateAttempt(userInput, correctText) {
     maxPoints,
     wordResults,
     extraWords,
-    summary: `${Math.round(points)}/${maxPoints} palabras (${score}%)`,
+    summary: `${Math.round(points)}/${maxPoints} words (${score}%)`,
   }
 }

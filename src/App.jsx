@@ -7,9 +7,9 @@ import transcriptions from './data/transcriptions.json'
 import './index.css'
 
 const TABS = [
-  { id: 'practice', label: 'Practicar' },
-  { id: 'stats', label: 'Progreso' },
-  { id: 'words', label: 'Palabras' },
+  { id: 'practice', label: 'Practice' },
+  { id: 'stats', label: 'Progress' },
+  { id: 'words', label: 'Words' },
 ]
 
 export default function App() {
@@ -33,7 +33,7 @@ export default function App() {
       <div className="app">
         <div className="empty-state">
           <div className="icon">🎧</div>
-          <p>Cargando catalogo...</p>
+          <p>Loading catalog...</p>
         </div>
       </div>
     )
@@ -45,7 +45,7 @@ export default function App() {
         <h1>WFD Trainer</h1>
         {stats && (
           <span className="header-stats">
-            {stats.todayAttempts} hoy · {stats.coverage}% cubierto
+            {stats.todayAttempts} today · {stats.coverage}% covered
           </span>
         )}
       </header>

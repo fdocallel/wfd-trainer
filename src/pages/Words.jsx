@@ -12,14 +12,14 @@ export default function Words() {
     return (
       <div className="empty-state">
         <div className="icon">📖</div>
-        <p>Practica algunos audios para ver tus palabras debiles aqui</p>
+        <p>Practice some audios to see your weakest words here</p>
       </div>
     )
   }
 
   return (
     <div>
-      <div className="section-title">Palabras mas dificiles</div>
+      <div className="section-title">Hardest words</div>
       <div className="card">
         {words.map((w) => (
           <div key={w.word} className="weak-word-item">
@@ -37,7 +37,7 @@ export default function Words() {
         ))}
       </div>
       <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--muted)' }}>
-        % = tasa de fallo. Solo palabras con 3+ intentos.
+        % = fail rate. Only words with 3+ attempts.
       </div>
     </div>
   )

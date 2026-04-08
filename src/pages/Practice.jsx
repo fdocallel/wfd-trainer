@@ -84,12 +84,12 @@ export default function Practice({ onAttempt }) {
 
       {playCount > 0 && phase !== 'result' && (
         <div className="replay-count">
-          Reproducido {playCount}x {playCount > 2 ? '(intenta con menos replays)' : ''}
+          Played {playCount}x {playCount > 2 ? '(try with fewer replays)' : ''}
         </div>
       )}
 
       {phase === 'ready' && (
-        <p className="audio-hint">Pulsa play para escuchar la frase</p>
+        <p className="audio-hint">Tap play to listen to the sentence</p>
       )}
 
       {/* Input */}
@@ -100,7 +100,7 @@ export default function Practice({ onAttempt }) {
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe lo que has escuchado..."
+            placeholder="Type what you heard..."
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck="false"
@@ -110,7 +110,7 @@ export default function Practice({ onAttempt }) {
             onClick={handleSubmit}
             disabled={!userInput.trim()}
           >
-            Comprobar
+            Check
           </button>
         </div>
       )}
@@ -137,19 +137,19 @@ export default function Practice({ onAttempt }) {
           </div>
 
           <div className="correct-text">
-            <strong>Frase correcta:</strong>
+            <strong>Correct sentence:</strong>
             {current.text}
           </div>
 
           {userInput && (
             <div className="correct-text" style={{ background: '#f1f5f9', marginTop: 8 }}>
-              <strong>Tu respuesta:</strong>
+              <strong>Your answer:</strong>
               {userInput}
             </div>
           )}
 
           <button className="next-btn" onClick={pickRandom}>
-            Siguiente ➜
+            Next ➜
           </button>
         </div>
       )}
