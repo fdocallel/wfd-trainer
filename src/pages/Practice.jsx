@@ -1,45 +1,88 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { db, saveAttempt } from '../db'
+import { saveAttempt, pickNextAudio } from '../db'
 import { evaluateAttempt } from '../scoring'
 import transcriptions from '../data/transcriptions.json'
 
 const AUDIO_BASE_URL = import.meta.env.BASE_URL + 'audio/'
 
+function scoreColor(score) {
+  if (score >= 80) return 'var(--correct)'
+  if (score >= 50) return 'var(--close)'
+  return 'var(--wrong)'
+}
+
 export default function Practice({ onAttempt }) {
   const [current, setCurrent] = useState(null)
-  const [phase, setPhase] = useState('ready') // ready | listening | writing | result
+  const [phase, setPhase] = useState('ready') // ready | loading | listening | writing | result
   const [userInput, setUserInput] = useState('')
   const [result, setResult] = useState(null)
   const [playCount, setPlayCount] = useState(0)
   const audioRef = useRef(null)
   const textareaRef = useRef(null)
 
-  // Seleccionar audio aleatorio
-  const pickRandom = useCallback(() => {
-    const idx = Math.floor(Math.random() * transcriptions.length)
-    setCurrent(transcriptions[idx])
+  const loadNext = useCallback(async () => {
+    const next = await pickNextAudio(transcriptions)
+    setCurrent(next)
     setPhase('ready')
     setUserInput('')
     setResult(null)
     setPlayCount(0)
   }, [])
 
-  useEffect(() => { pickRandom() }, [pickRandom])
+  useEffect(() => { loadNext() }, [loadNext])
+
+  // Keyboard: Space/Enter on result → next
+  useEffect(() => {
+    function handleGlobalKey(e) {
+      if (phase === 'result' && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault()
+        loadNext()
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKey)
+    return () => window.removeEventListener('keydown', handleGlobalKey)
+  }, [phase, loadNext])
 
   function handlePlay() {
     if (!current) return
     const audio = audioRef.current
     if (!audio) return
 
+    // Show loading state
+    if (phase !== 'listening' && phase !== 'writing') {
+      setPhase('loading')
+    }
+
     audio.src = AUDIO_BASE_URL + current.filename
-    audio.play()
-    setPhase('listening')
-    setPlayCount((c) => c + 1)
+
+    audio.oncanplaythrough = () => {
+      audio.oncanplaythrough = null
+      audio.play()
+      setPhase('listening')
+      setPlayCount((c) => c + 1)
+    }
 
     audio.onended = () => {
-      setPhase('writing')
-      setTimeout(() => textareaRef.current?.focus(), 100)
+      if (phase !== 'result') {
+        setPhase('writing')
+        setTimeout(() => textareaRef.current?.focus(), 100)
+      }
     }
+
+    audio.onerror = () => {
+      setPhase('writing')
+    }
+
+    // If already cached, oncanplaythrough fires immediately
+    audio.load()
+  }
+
+  function handleReplay() {
+    const audio = audioRef.current
+    if (!audio || !current) return
+    audio.currentTime = 0
+    audio.play()
+    setPlayCount((c) => c + 1)
   }
 
   function handleSubmit() {
@@ -49,7 +92,6 @@ export default function Practice({ onAttempt }) {
     setResult(res)
     setPhase('result')
 
-    // Guardar en DB
     saveAttempt(
       current.filename,
       userInput,
@@ -75,11 +117,10 @@ export default function Practice({ onAttempt }) {
 
       {/* Play button */}
       <button
-        className={`play-btn ${phase === 'listening' ? 'playing' : ''}`}
-        onClick={handlePlay}
-        disabled={phase === 'result'}
+        className={`play-btn ${phase === 'listening' ? 'playing' : ''} ${phase === 'loading' ? 'loading' : ''}`}
+        onClick={phase === 'result' ? handleReplay : handlePlay}
       >
-        {phase === 'listening' ? '🔊' : '▶'}
+        {phase === 'loading' ? '...' : phase === 'listening' ? '🔊' : phase === 'result' ? '🔄' : '▶'}
       </button>
 
       {playCount > 0 && phase !== 'result' && (
@@ -88,8 +129,16 @@ export default function Practice({ onAttempt }) {
         </div>
       )}
 
+      {phase === 'result' && (
+        <div className="replay-count">Tap to replay</div>
+      )}
+
       {phase === 'ready' && (
         <p className="audio-hint">Tap play to listen to the sentence</p>
+      )}
+
+      {phase === 'loading' && (
+        <p className="audio-hint">Loading audio...</p>
       )}
 
       {/* Input */}
@@ -105,13 +154,18 @@ export default function Practice({ onAttempt }) {
             autoCorrect="off"
             spellCheck="false"
           />
-          <button
-            className="submit-btn"
-            onClick={handleSubmit}
-            disabled={!userInput.trim()}
-          >
-            Check
-          </button>
+          <div className="input-actions">
+            <button className="replay-small-btn" onClick={handlePlay} type="button">
+              🔊 Replay
+            </button>
+            <button
+              className="submit-btn"
+              onClick={handleSubmit}
+              disabled={!userInput.trim()}
+            >
+              Check
+            </button>
+          </div>
         </div>
       )}
 
@@ -119,7 +173,9 @@ export default function Practice({ onAttempt }) {
       {phase === 'result' && result && (
         <div className="results">
           <div className="score-display">
-            <div className="score-number">{result.score}%</div>
+            <div className="score-number" style={{ color: scoreColor(result.score) }}>
+              {result.score}%
+            </div>
             <div className="score-label">{result.summary}</div>
           </div>
 
@@ -148,7 +204,7 @@ export default function Practice({ onAttempt }) {
             </div>
           )}
 
-          <button className="next-btn" onClick={pickRandom}>
+          <button className="next-btn" onClick={loadNext}>
             Next ➜
           </button>
         </div>

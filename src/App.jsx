@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { loadCatalog, getStats } from './db'
+import { loadCatalog, getStats, getDailyGoal } from './db'
 import Practice from './pages/Practice'
 import Stats from './pages/Stats'
 import Words from './pages/Words'
@@ -16,10 +16,12 @@ export default function App() {
   const [tab, setTab] = useState('practice')
   const [ready, setReady] = useState(false)
   const [stats, setStats] = useState(null)
+  const [dailyGoal, setDailyGoalState] = useState(20)
 
   useEffect(() => {
-    loadCatalog(transcriptions).then(() => {
+    loadCatalog(transcriptions).then(async () => {
       setReady(true)
+      setDailyGoalState(await getDailyGoal())
       refreshStats()
     })
   }, [])
@@ -39,16 +41,35 @@ export default function App() {
     )
   }
 
+  const goalProgress = stats ? Math.min(stats.todayAttempts / dailyGoal, 1) : 0
+  const goalDone = stats && stats.todayAttempts >= dailyGoal
+
   return (
     <div className="app">
       <header className="header">
-        <h1>WFD Trainer</h1>
-        {stats && (
-          <span className="header-stats">
-            {stats.todayAttempts} today · {stats.coverage}% covered
-          </span>
+        <div>
+          <h1>WFD Trainer</h1>
+          {stats && (
+            <span className="header-stats">
+              {stats.todayAttempts}/{dailyGoal} today · {stats.coverage}% covered
+            </span>
+          )}
+        </div>
+        {stats && stats.streak > 0 && (
+          <div className="streak-badge">
+            <span className="streak-fire">🔥</span>
+            <span className="streak-num">{stats.streak}</span>
+          </div>
         )}
       </header>
+
+      {/* Daily goal progress bar */}
+      <div className="goal-bar">
+        <div
+          className={`goal-bar-fill ${goalDone ? 'done' : ''}`}
+          style={{ width: `${goalProgress * 100}%` }}
+        />
+      </div>
 
       <nav className="nav">
         {TABS.map((t) => (
@@ -64,7 +85,7 @@ export default function App() {
 
       <div className="page-content">
         {tab === 'practice' && <Practice onAttempt={refreshStats} />}
-        {tab === 'stats' && <Stats stats={stats} />}
+        {tab === 'stats' && <Stats stats={stats} dailyGoal={dailyGoal} />}
         {tab === 'words' && <Words />}
       </div>
     </div>
