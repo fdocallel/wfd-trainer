@@ -27,7 +27,7 @@ export async function loadCatalog(transcriptions) {
 
 // ── Smart Queue ──
 
-export async function pickNextAudio(transcriptions) {
+export async function pickNextAudio(transcriptions, weakMode = false) {
   const attempts = await db.attempts.toArray()
 
   // Build map: filename → { count, bestScore, lastSeen }
@@ -42,29 +42,39 @@ export async function pickNextAudio(transcriptions) {
     m.lastSeen = Math.max(m.lastSeen, a.timestamp || 0)
   }
 
+  let pool = transcriptions
+
+  // Weak mode: filter to audios containing weak words
+  if (weakMode) {
+    const weakWords = await getWeakestWords(50)
+    if (weakWords.length > 0) {
+      const weakSet = new Set(weakWords.map((w) => w.word))
+      const filtered = transcriptions.filter((t) => {
+        const words = t.text.toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/)
+        return words.some((w) => weakSet.has(w))
+      })
+      if (filtered.length > 0) pool = filtered
+    }
+  }
+
   // Score each audio for priority (lower = pick sooner)
-  const scored = transcriptions.map((t) => {
+  const scored = pool.map((t) => {
     const stats = audioMap[t.filename]
     if (!stats) {
-      // Never seen → highest priority + random jitter
       return { audio: t, priority: Math.random() * 10 }
     }
-    // Seen but low score → high priority
-    // Seen and mastered (>90%) → low priority
-    // Recently seen → lower priority (avoid immediate repeats)
-    const recency = (Date.now() - stats.lastSeen) / (1000 * 60 * 60) // hours ago
+    const recency = (Date.now() - stats.lastSeen) / (1000 * 60 * 60)
     const mastery = stats.bestScore / 100
     const priority = 20
-      + (mastery * 50)           // mastered → deprioritize
-      - (recency * 0.5)         // older → slightly boost
-      + (stats.count * 5)       // seen many times → deprioritize
-      + (Math.random() * 15)    // jitter to avoid predictability
+      + (mastery * 50)
+      - (recency * 0.5)
+      + (stats.count * 5)
+      + (Math.random() * 15)
     return { audio: t, priority }
   })
 
   scored.sort((a, b) => a.priority - b.priority)
 
-  // Pick from top 5 candidates randomly for variety
   const top = scored.slice(0, 5)
   return top[Math.floor(Math.random() * top.length)].audio
 }
@@ -113,6 +123,36 @@ export async function getWeakestWords(limit = 20) {
     .slice(0, limit)
 }
 
+// ── Recent Attempts ──
+
+export async function getRecentAttempts(limit = 30) {
+  const all = await db.attempts.reverse().limit(limit).toArray()
+  return all
+}
+
+// ── Daily History (last N days) ──
+
+export async function getDailyHistory(days = 7) {
+  const attempts = await db.attempts.toArray()
+  const result = []
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const dayAttempts = attempts.filter((a) => a.date === dateStr)
+    result.push({
+      date: dateStr,
+      label: d.toLocaleDateString('en', { weekday: 'short' }),
+      count: dayAttempts.length,
+      avgScore: dayAttempts.length > 0
+        ? Math.round(dayAttempts.reduce((s, a) => s + a.score, 0) / dayAttempts.length)
+        : 0,
+    })
+  }
+  return result
+}
+
 // ── Stats ──
 
 export async function getStats() {
@@ -123,7 +163,7 @@ export async function getStats() {
   const uniqueAudios = new Set(attempts.map((a) => a.filename)).size
   const totalAudios = await db.audios.count()
 
-  // Streak: count consecutive days with attempts (including today)
+  // Streak
   const daysWithAttempts = new Set(attempts.map((a) => a.date))
   let streak = 0
   const d = new Date()
@@ -133,7 +173,6 @@ export async function getStats() {
       streak++
       d.setDate(d.getDate() - 1)
     } else if (streak === 0) {
-      // Today might not have attempts yet — check yesterday
       d.setDate(d.getDate() - 1)
       const yesterday = d.toISOString().slice(0, 10)
       if (daysWithAttempts.has(yesterday)) {
@@ -174,4 +213,32 @@ export async function getDailyGoal() {
 
 export async function setDailyGoal(value) {
   await db.appState.put({ key: 'dailyGoal', value })
+}
+
+// ── Export / Import ──
+
+export async function exportData() {
+  const attempts = await db.attempts.toArray()
+  const wordStats = await db.wordStats.toArray()
+  const appState = await db.appState.toArray()
+  return {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    attempts,
+    wordStats,
+    appState,
+  }
+}
+
+export async function importData(data) {
+  if (!data?.version || !data.attempts) {
+    throw new Error('Invalid backup file')
+  }
+  await db.attempts.clear()
+  await db.wordStats.clear()
+  await db.appState.clear()
+
+  if (data.attempts.length) await db.attempts.bulkPut(data.attempts)
+  if (data.wordStats?.length) await db.wordStats.bulkPut(data.wordStats)
+  if (data.appState?.length) await db.appState.bulkPut(data.appState)
 }

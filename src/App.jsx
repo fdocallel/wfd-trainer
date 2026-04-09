@@ -17,6 +17,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [stats, setStats] = useState(null)
   const [dailyGoal, setDailyGoalState] = useState(20)
+  const [weakMode, setWeakMode] = useState(false)
 
   useEffect(() => {
     loadCatalog(transcriptions).then(async () => {
@@ -84,7 +85,25 @@ export default function App() {
       </nav>
 
       <div className="page-content">
-        {tab === 'practice' && <Practice onAttempt={refreshStats} />}
+        {tab === 'practice' && (
+          <>
+            <div className="mode-toggle">
+              <button
+                className={`mode-btn ${!weakMode ? 'active' : ''}`}
+                onClick={() => setWeakMode(false)}
+              >
+                All audios
+              </button>
+              <button
+                className={`mode-btn ${weakMode ? 'active' : ''}`}
+                onClick={() => setWeakMode(true)}
+              >
+                Weak words
+              </button>
+            </div>
+            <Practice onAttempt={refreshStats} weakMode={weakMode} />
+          </>
+        )}
         {tab === 'stats' && <Stats stats={stats} dailyGoal={dailyGoal} />}
         {tab === 'words' && <Words />}
       </div>

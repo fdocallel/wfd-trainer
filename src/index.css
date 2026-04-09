@@ -435,3 +435,259 @@ body {
   font-weight: 400;
   opacity: 0.5;
 }
+
+/* ── Fade animations ── */
+.fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Audio indicator ── */
+.audio-indicator {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 12px 16px 0;
+  letter-spacing: 0.3px;
+}
+
+/* ── Skip button ── */
+.skip-btn {
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.skip-btn:active {
+  background: var(--missing-bg);
+}
+
+/* ── Weak mode badge ── */
+.weak-mode-badge {
+  display: inline-block;
+  margin-left: 6px;
+  background: var(--wrong-bg);
+  color: var(--wrong);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* ── Mode toggle ── */
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin: 12px 16px 0;
+  background: var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mode-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── 7-day chart ── */
+.day-chart {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 120px;
+}
+
+.day-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.day-score {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  height: 16px;
+}
+
+.day-bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.day-bar-fill {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+  transition: height 0.3s ease;
+}
+
+.day-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.day-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Recent attempts ── */
+.recent-list {
+  padding: 0;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-score {
+  font-size: 15px;
+  font-weight: 800;
+  min-width: 42px;
+}
+
+.recent-text {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-time {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Export buttons ── */
+.export-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.export-btn:active {
+  background: var(--primary-hover);
+}
+
+.export-btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.export-btn.secondary:active {
+  background: var(--primary-light);
+}
+
+/* ── Practice container ── */
+.practice-container {
+  padding-bottom: 24px;
+}
+
+/* ── Word level dot ── */
+.word-level-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Catalog list ── */
+.catalog-list {
+  padding: 0;
+}
+
+.catalog-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.catalog-item:last-child {
+  border-bottom: none;
+}
+
+.catalog-word {
+  flex: 1;
+  font-weight: 600;
+}
+
+.catalog-level {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.catalog-count {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 32px;
+  text-align: right;
+}
+
+.catalog-pct {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 36px;
+  text-align: right;
+}

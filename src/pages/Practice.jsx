@@ -11,23 +11,41 @@ function scoreColor(score) {
   return 'var(--wrong)'
 }
 
-export default function Practice({ onAttempt }) {
+function haptic(type) {
+  if (navigator.vibrate) {
+    if (type === 'success') navigator.vibrate(50)
+    else if (type === 'error') navigator.vibrate([30, 50, 30])
+  }
+}
+
+// Extract audio number from filename: WFD_AC_0001.mp3 → 1
+function audioNum(filename) {
+  const m = filename.match(/(\d+)\.mp3$/)
+  return m ? parseInt(m[1], 10) : 0
+}
+
+export default function Practice({ onAttempt, weakMode }) {
   const [current, setCurrent] = useState(null)
   const [phase, setPhase] = useState('ready') // ready | loading | listening | writing | result
   const [userInput, setUserInput] = useState('')
   const [result, setResult] = useState(null)
   const [playCount, setPlayCount] = useState(0)
+  const [fading, setFading] = useState(false)
   const audioRef = useRef(null)
   const textareaRef = useRef(null)
 
   const loadNext = useCallback(async () => {
-    const next = await pickNextAudio(transcriptions)
-    setCurrent(next)
-    setPhase('ready')
-    setUserInput('')
-    setResult(null)
-    setPlayCount(0)
-  }, [])
+    setFading(true)
+    setTimeout(async () => {
+      const next = await pickNextAudio(transcriptions, weakMode)
+      setCurrent(next)
+      setPhase('ready')
+      setUserInput('')
+      setResult(null)
+      setPlayCount(0)
+      setFading(false)
+    }, 150)
+  }, [weakMode])
 
   useEffect(() => { loadNext() }, [loadNext])
 
@@ -48,7 +66,6 @@ export default function Practice({ onAttempt }) {
     const audio = audioRef.current
     if (!audio) return
 
-    // Show loading state
     if (phase !== 'listening' && phase !== 'writing') {
       setPhase('loading')
     }
@@ -73,7 +90,6 @@ export default function Practice({ onAttempt }) {
       setPhase('writing')
     }
 
-    // If already cached, oncanplaythrough fires immediately
     audio.load()
   }
 
@@ -91,6 +107,10 @@ export default function Practice({ onAttempt }) {
     const res = evaluateAttempt(userInput, current.text)
     setResult(res)
     setPhase('result')
+
+    // Haptic
+    if (res.score >= 80) haptic('success')
+    else haptic('error')
 
     saveAttempt(
       current.filename,
@@ -112,8 +132,14 @@ export default function Practice({ onAttempt }) {
   if (!current) return null
 
   return (
-    <div>
+    <div className={`practice-container ${fading ? 'fade-out' : 'fade-in'}`}>
       <audio ref={audioRef} preload="none" />
+
+      {/* Audio indicator */}
+      <div className="audio-indicator">
+        #{audioNum(current.filename)} of {transcriptions.length}
+        {weakMode && <span className="weak-mode-badge">Weak words</span>}
+      </div>
 
       {/* Play button */}
       <button
@@ -158,6 +184,9 @@ export default function Practice({ onAttempt }) {
             <button className="replay-small-btn" onClick={handlePlay} type="button">
               🔊 Replay
             </button>
+            <button className="skip-btn" onClick={loadNext} type="button">
+              Skip
+            </button>
             <button
               className="submit-btn"
               onClick={handleSubmit}
@@ -171,7 +200,7 @@ export default function Practice({ onAttempt }) {
 
       {/* Results */}
       {phase === 'result' && result && (
-        <div className="results">
+        <div className="results fade-in">
           <div className="score-display">
             <div className="score-number" style={{ color: scoreColor(result.score) }}>
               {result.score}%
