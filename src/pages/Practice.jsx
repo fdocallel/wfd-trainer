@@ -213,12 +213,31 @@ export default function Practice({ onAttempt, weakMode }) {
               {result.wordResults.map((wr, i) => (
                 <span key={i} className={`word-result ${wr.status}`}>
                   {wr.word}
-                  {wr.status === 'close' && wr.userWord && (
-                    <span style={{ fontSize: 11, opacity: 0.7 }}> ({wr.userWord})</span>
+                  {wr.userWord && wr.status !== 'correct' && wr.status !== 'missing' && (
+                    <span className="word-result-hint">
+                      {wr.status === 'misplaced' && `you wrote: ${wr.userWord}`}
+                      {wr.status === 'close' && `typo: ${wr.userWord}`}
+                      {wr.status === 'close-misplaced' && `typo+order: ${wr.userWord}`}
+                      {wr.status === 'wrong' && `wrote: ${wr.userWord}`}
+                    </span>
                   )}
                 </span>
               ))}
             </div>
+            {result.extraWords.length > 0 && (
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
+                Extra words: {result.extraWords.join(', ')}
+              </div>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="score-legend">
+            <span className="legend-item"><span className="legend-dot" style={{background:'var(--correct)'}}/>correct</span>
+            <span className="legend-item"><span className="legend-dot" style={{background:'#a16207'}}/>right word, wrong order</span>
+            <span className="legend-item"><span className="legend-dot" style={{background:'var(--close)'}}/>typo</span>
+            <span className="legend-item"><span className="legend-dot" style={{background:'var(--wrong)'}}/>wrong</span>
+            <span className="legend-item"><span className="legend-dot" style={{background:'var(--missing)'}}/>missing</span>
           </div>
 
           <div className="correct-text">

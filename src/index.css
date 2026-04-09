@@ -218,9 +218,18 @@ body {
 }
 
 .word-result.correct { background: var(--correct-bg); color: var(--correct); }
+.word-result.misplaced { background: #fef9c3; color: #a16207; }
 .word-result.close { background: var(--close-bg); color: var(--close); text-decoration: underline; }
+.word-result.close-misplaced { background: #fef3c7; color: var(--close); text-decoration: underline; font-style: italic; }
 .word-result.wrong { background: var(--wrong-bg); color: var(--wrong); text-decoration: line-through; }
 .word-result.missing { background: var(--missing-bg); color: var(--missing); font-style: italic; }
+
+.word-result-hint {
+  display: block;
+  font-size: 10px;
+  opacity: 0.7;
+  font-weight: 400;
+}
 
 .correct-text {
   margin-top: 12px;
@@ -630,6 +639,30 @@ body {
 
 .export-btn.secondary:active {
   background: var(--primary-light);
+}
+
+/* ── Score legend ── */
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-top: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
 }
 
 /* ── Practice container ── */
